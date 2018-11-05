@@ -20,10 +20,10 @@ class LaraBot:
 
     def __init__(self, config):
         self.website = str(config['website'])
-        self.setHeaders()
+        self.set_headers()
         self.s = requests.Session()
 
-    def setHeaders(self):
+    def set_headers(self):
         self.headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
             "Accept-Encoding": "gzip, deflate, br",

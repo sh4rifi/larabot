@@ -5,4 +5,4 @@ bot_data = {
 }
 
 bot = LaraBot(bot_data)
-#bot.init_form("http://orod.tv/register")
+bot.init_form("http://orod.tv/register")
