@@ -36,6 +36,25 @@ class LaraBot:
             "User-Agent": self.user_agent
         }
 
+    def register(self, data={}, patch='/register'):
+        self.write_log("Trying to register " + data['email'])
+
+        url = self.website + patch;
+        self.init_form(url)
+        default = {
+            "_token": self.token_form,
+        }
+        default.update(data)
+
+        if (url == ''):
+            self.write_log("plz fill url")
+        else:
+            r = requests.post(url, headers=self.headers, data=default, cookies=self.jar)
+            #self.write_log(default['email'] + " Registered")
+            print(r.text)
+
+
+
     """Prepare the token before requesting a form"""
     def init_form(self, url):
         r = self.s.get(url)
