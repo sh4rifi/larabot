@@ -4,6 +4,7 @@ import requests
 import requests
 from bs4 import BeautifulSoup
 
+
 class LaraBot:
     """ log_mod 0 to console, 1 to file """
     log_mod = 0
@@ -15,8 +16,13 @@ class LaraBot:
     accept_language = 'en-US,en;q=0.9,fa;q=0.8'
     """init form"""
     jar = None
-    content_form_page = ""
-    token_form = ""
+    content_form_page = ''
+    token_form = ''
+    laravel_session = ''
+    xsrf_token = ''
+    """"login"""
+    user_login = ''
+    action_form = 'http://orod.tv/admin/login'
 
     def __init__(self, config):
         self.website = str(config['website'])
@@ -37,8 +43,6 @@ class LaraBot:
         }
 
     def register(self, data={}, patch='/register'):
-        self.write_log("Trying to register " + data['email'])
-
         url = self.website + patch;
         self.init_form(url)
         default = {
@@ -49,23 +53,46 @@ class LaraBot:
         if (url == ''):
             self.write_log("plz fill url")
         else:
-            r = requests.post(url, headers=self.headers, data=default, cookies=self.jar)
-            #self.write_log(default['email'] + " Registered")
+            self.write_log("Trying to register " + data['email'])
+            r = self.s.post(url, headers=self.headers, data=default, allow_redirects=True)
+            self.jar = requests.cookies.RequestsCookieJar()
+            self.jar.set('XSRF-TOKEN', r.cookies['XSRF-TOKEN'])
+            self.jar.set('laravel_session', r.cookies['laravel_session'])
+            self.s.cookies = self.jar
             print(r.text)
 
+    def login(self, data, login_patch='/login'):
+        url = self.website + login_patch
+        self.init_form(url)
+        data.update({"_token": self.token_form})
+        if (url == ''):
+            self.write_log("plz fill url")
+        else:
+            self.write_log("Trying to Login " + data['email'])
+            login = self.s.post(self.action_form, headers=self.headers, data=data)
+            self.jar = requests.cookies.RequestsCookieJar()
+            self.jar.set('XSRF-TOKEN', login.cookies['XSRF-TOKEN'])
+            self.jar.set('laravel_session', login.cookies['laravel_session'])
+            self.s.cookies = self.jar
 
+            # login = self.s.post(url, data=data, allow_redirects=True)
+
+            print(login.text)
 
     """Prepare the token before requesting a form"""
+
     def init_form(self, url):
         r = self.s.get(url)
+        self.xsrf_token = r.cookies['XSRF-TOKEN']
+        self.laravel_session = r.cookies['laravel_session']
         self.content_form_page = r.text
         self.write_log("form open Successfully")
         """"set CookieJar"""
         self.write_log("Trying to get cookies")
         self.jar = requests.cookies.RequestsCookieJar()
-        self.jar.set('XSRF-TOKEN', r.cookies['XSRF-TOKEN'])
-        self.jar.set('laravel_session', r.cookies['laravel_session'])
-        self.write_log("XSRF-TOKEN:" + r.cookies['XSRF-TOKEN'])
+        self.jar.set('XSRF-TOKEN', self.xsrf_token)
+        self.jar.set('laravel_session', self.laravel_session)
+        self.write_log("XSRF-TOKEN:" + self.xsrf_token)
         self.write_log("CookieJar set successfully")
         """"get _token from form"""
         self.write_log("Trying to get _token from form")
