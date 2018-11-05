@@ -1,6 +1,8 @@
 import logging
 import datetime
-
+import requests
+import requests
+from bs4 import BeautifulSoup
 
 class LaraBot:
     """ log_mod 0 to console, 1 to file """
@@ -11,10 +13,15 @@ class LaraBot:
     headers = {}
     user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36'
     accept_language = 'en-US,en;q=0.9,fa;q=0.8'
+    """init form"""
+    jar = None
+    content_form_page = ""
+    token_form = ""
 
     def __init__(self, config):
         self.website = str(config['website'])
         self.setHeaders()
+        self.s = requests.Session()
 
     def setHeaders(self):
         self.headers = {
@@ -28,6 +35,27 @@ class LaraBot:
             "Upgrade-Insecure-Requests": "1",
             "User-Agent": self.user_agent
         }
+
+    """Prepare the token before requesting a form"""
+    def init_form(self, url):
+        r = self.s.get(url)
+        self.content_form_page = r.text
+        self.write_log("form open Successfully")
+        """"set CookieJar"""
+        self.write_log("Trying to get cookies")
+        self.jar = requests.cookies.RequestsCookieJar()
+        self.jar.set('XSRF-TOKEN', r.cookies['XSRF-TOKEN'])
+        self.jar.set('laravel_session', r.cookies['laravel_session'])
+        self.write_log("XSRF-TOKEN:" + r.cookies['XSRF-TOKEN'])
+        self.write_log("CookieJar set successfully")
+        """"get _token from form"""
+        self.write_log("Trying to get _token from form")
+        soup = BeautifulSoup(self.content_form_page, 'html.parser')
+        for link in soup.find_all('input'):
+            self.token_form = link['value']
+            self.write_log("_token:" + self.token_form)
+            self.write_log("token set successfully")
+            break
 
     def write_log(self, log_text):
         """ Write log by print() or logger """
