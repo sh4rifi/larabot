@@ -5,4 +5,4 @@ bot_data = {
 }
 
 bot = LaraBot(bot_data)
-bot.write_log("test logging")
+print(bot.headers)
